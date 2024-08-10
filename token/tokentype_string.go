@@ -14,19 +14,34 @@ func _() {
 	_ = x[INT-4]
 	_ = x[ASSIGN-5]
 	_ = x[PLUS-6]
-	_ = x[COMMA-7]
-	_ = x[SEMICOLON-8]
-	_ = x[LPAREN-9]
-	_ = x[RPAREN-10]
-	_ = x[LBRACE-11]
-	_ = x[RBRACE-12]
-	_ = x[FUNCTION-13]
-	_ = x[LET-14]
+	_ = x[MINUS-7]
+	_ = x[BANG-8]
+	_ = x[ASTERISK-9]
+	_ = x[SLASH-10]
+	_ = x[EQ-11]
+	_ = x[NOT_EQ-12]
+	_ = x[LT-13]
+	_ = x[GT-14]
+	_ = x[LT_EQ-15]
+	_ = x[GT_EQ-16]
+	_ = x[COMMA-17]
+	_ = x[SEMICOLON-18]
+	_ = x[LPAREN-19]
+	_ = x[RPAREN-20]
+	_ = x[LBRACE-21]
+	_ = x[RBRACE-22]
+	_ = x[FUNCTION-23]
+	_ = x[LET-24]
+	_ = x[TRUE-25]
+	_ = x[FALSE-26]
+	_ = x[IF-27]
+	_ = x[ELSE-28]
+	_ = x[RETURN-29]
 }
 
-const _TokenType_name = "ILLEGALEOFIDENTINT=+,;(){}FUNCTIONLET"
+const _TokenType_name = "ILLEGALEOFIDENTINT=+-!*/==!=<><=>=,;(){}FUNCTIONLETTRUEFALSEIFELSERETURN"
 
-var _TokenType_index = [...]uint8{0, 7, 10, 15, 18, 19, 20, 21, 22, 23, 24, 25, 26, 34, 37}
+var _TokenType_index = [...]uint8{0, 7, 10, 15, 18, 19, 20, 21, 22, 23, 24, 26, 28, 29, 30, 32, 34, 35, 36, 37, 38, 39, 40, 48, 51, 55, 60, 62, 66, 72}
 
 func (i TokenType) String() string {
 	i -= 1
