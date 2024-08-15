@@ -42,7 +42,7 @@ func (p *Program) String() string {
 }
 
 type LetStatement struct {
-	Token token.Token
+	Token token.Token // LET
 	Name  *Identifier
 	Value Expression
 }
@@ -60,7 +60,7 @@ func (ls *LetStatement) String() string {
 }
 
 type ReturnStatement struct {
-	Token       token.Token
+	Token       token.Token // RETURN
 	ReturnValue Expression
 }
 
@@ -84,6 +84,21 @@ type ExpressionStatement struct {
 func (es *ExpressionStatement) statementNode()       {}
 func (es *ExpressionStatement) TokenLiteral() string { return es.Token.Literal }
 func (es *ExpressionStatement) String() string       { return es.Expression.String() }
+
+type BlockStatement struct {
+	Token      token.Token // {
+	Statements []Statement
+}
+
+func (bs *BlockStatement) statementNode()       {}
+func (bs *BlockStatement) TokenLiteral() string { return bs.Token.Literal }
+func (bs *BlockStatement) String() string {
+	var out strings.Builder
+	for _, stmt := range bs.Statements {
+		out.WriteString(stmt.String())
+	}
+	return out.String()
+}
 
 type Identifier struct {
 	Token token.Token
@@ -145,5 +160,30 @@ func (oe *InfixExpression) String() string {
 	out.WriteString(" " + oe.Operator + " ")
 	out.WriteString(oe.Right.String())
 	out.WriteByte(')')
+	return out.String()
+}
+
+type IfExpression struct {
+	Token       token.Token // IF
+	Condition   Expression
+	Consequence *BlockStatement
+	Alternative *BlockStatement
+}
+
+func (ie *IfExpression) expressionNode()      {}
+func (ie *IfExpression) TokenLiteral() string { return ie.Token.Literal }
+func (ie *IfExpression) String() string {
+	var out strings.Builder
+
+	out.WriteString("if ")
+	out.WriteString(ie.Condition.String())
+	out.WriteByte(' ')
+	out.WriteString(ie.Consequence.String())
+
+	if ie.Alternative != nil {
+		out.WriteString("else ")
+		out.WriteString(ie.Alternative.String())
+	}
+
 	return out.String()
 }
