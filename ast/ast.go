@@ -187,3 +187,27 @@ func (ie *IfExpression) String() string {
 
 	return out.String()
 }
+
+type FunctionExpression struct {
+	Token      token.Token // FUNCTION
+	Parameters []*Identifier
+	Body       *BlockStatement
+}
+
+func (fe *FunctionExpression) expressionNode()      {}
+func (fe *FunctionExpression) TokenLiteral() string { return fe.Token.Literal }
+func (fe *FunctionExpression) String() string {
+	var out strings.Builder
+
+	params := make([]string, len(fe.Parameters))
+	for _, param := range fe.Parameters {
+		params = append(params, param.String())
+	}
+
+	out.WriteByte('(')
+	out.WriteString(strings.Join(params, ", "))
+	out.WriteByte(')')
+	out.WriteString(fe.Body.String())
+
+	return out.String()
+}
