@@ -200,14 +200,38 @@ func (fe *FunctionExpression) String() string {
 	var out strings.Builder
 
 	params := make([]string, len(fe.Parameters))
-	for _, param := range fe.Parameters {
-		params = append(params, param.String())
+	for i, param := range fe.Parameters {
+		params[i] = param.String()
 	}
 
 	out.WriteByte('(')
 	out.WriteString(strings.Join(params, ", "))
 	out.WriteByte(')')
 	out.WriteString(fe.Body.String())
+
+	return out.String()
+}
+
+type CallExpression struct {
+	Token     token.Token
+	Function  Expression
+	Arguments []Expression
+}
+
+func (ce *CallExpression) expressionNode()      {}
+func (ce *CallExpression) TokenLiteral() string { return ce.Token.Literal }
+func (ce *CallExpression) String() string {
+	var out strings.Builder
+
+	args := make([]string, len(ce.Arguments))
+	for i, a := range ce.Arguments {
+		args[i] = a.String()
+	}
+
+	out.WriteString(ce.Function.String())
+	out.WriteByte('(')
+	out.WriteString(strings.Join(args, ", "))
+	out.WriteByte(')')
 
 	return out.String()
 }
