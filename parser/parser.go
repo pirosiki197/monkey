@@ -98,11 +98,19 @@ func (p *Parser) nextToken() {
 	p.peekToken = p.l.NextToken()
 }
 
+func (p *Parser) curTokenIs(t token.TokenType) bool {
+	return p.curToken.Type == t
+}
+
+func (p *Parser) peekTokenIs(t token.TokenType) bool {
+	return p.peekToken.Type == t
+}
+
 func (p *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
 
-	for p.curToken.Type != token.EOF {
+	for !p.curTokenIs(token.EOF) {
 		stmt := p.parseStatement()
 		program.Statements = append(program.Statements, stmt)
 		p.nextToken()
@@ -135,8 +143,11 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 		return nil
 	}
 
-	// TODO: parse LetStatement.Value
-	for p.curToken.Type != token.SEMICOLON {
+	p.nextToken()
+
+	stmt.Value = p.parseExpression(LOWEST)
+
+	if p.peekToken.Type == token.SEMICOLON {
 		p.nextToken()
 	}
 
@@ -146,7 +157,11 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	stmt := &ast.ReturnStatement{Token: p.curToken}
 
-	for p.curToken.Type != token.SEMICOLON {
+	p.nextToken()
+
+	stmt.ReturnValue = p.parseExpression(LOWEST)
+
+	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
 
@@ -155,7 +170,7 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	stmt := &ast.ExpressionStatement{Token: p.curToken, Expression: p.parseExpression(LOWEST)}
-	if p.peekToken.Type == token.SEMICOLON {
+	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
 	return stmt
@@ -164,7 +179,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	stmt := &ast.BlockStatement{Token: p.curToken}
 	p.nextToken()
-	for p.curToken.Type != token.RBRACE && p.curToken.Type != token.EOF {
+	for !p.curTokenIs(token.RBRACE) && !p.curTokenIs(token.EOF) {
 		stmt.Statements = append(stmt.Statements, p.parseStatement())
 		p.nextToken()
 	}
@@ -182,7 +197,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 		return nil
 	}
 	leftExp := prefix()
-	for p.peekToken.Type != token.SEMICOLON && precedence < p.peekPrecedence() {
+	for !p.peekTokenIs(token.SEMICOLON) && precedence < p.peekPrecedence() {
 		infix := p.infixParseFns[p.peekToken.Type]
 		if infix == nil {
 			return leftExp
@@ -267,7 +282,7 @@ func (p *Parser) parseIfExpression() ast.Expression {
 	}
 	expression.Consequence = p.parseBlockStatement()
 
-	if p.peekToken.Type == token.ELSE {
+	if p.peekTokenIs(token.ELSE) {
 		p.nextToken()
 		if !p.expectPeek(token.LBRACE) {
 			return nil
@@ -301,14 +316,14 @@ func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 
 	params := make([]*ast.Identifier, 0)
 
-	if p.curToken.Type == token.RBRACE {
+	if p.curTokenIs(token.RBRACE) {
 		return params
 	}
 
 	ident := &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 	params = append(params, ident)
 
-	for p.peekToken.Type == token.COMMA {
+	for p.peekTokenIs(token.COMMA) {
 		p.nextToken()
 		p.nextToken()
 		ident := &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
@@ -332,18 +347,18 @@ func (p *Parser) parseFunctionCallExpression(call ast.Expression) ast.Expression
 }
 
 func (p *Parser) parseCallArguments() []ast.Expression {
+	p.nextToken()
+
 	args := make([]ast.Expression, 0)
 
 	// no arguments
-	if p.peekToken.Type == token.RPAREN {
-		p.nextToken()
+	if p.curToken.Type == token.RPAREN {
 		return args
 	}
 
-	p.nextToken()
 	args = append(args, p.parseExpression(LOWEST))
 
-	for p.peekToken.Type == token.COMMA {
+	for p.peekTokenIs(token.COMMA) {
 		p.nextToken()
 		p.nextToken()
 		args = append(args, p.parseExpression(LOWEST))
@@ -356,12 +371,12 @@ func (p *Parser) parseCallArguments() []ast.Expression {
 	return args
 }
 
-func (p *Parser) expectPeek(tok token.TokenType) bool {
-	if p.peekToken.Type == tok {
+func (p *Parser) expectPeek(t token.TokenType) bool {
+	if p.peekTokenIs(t) {
 		p.nextToken()
 		return true
 	} else {
-		p.peekError(tok)
+		p.peekError(t)
 		return false
 	}
 }

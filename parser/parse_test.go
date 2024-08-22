@@ -12,7 +12,7 @@ func TestLetStatements(t *testing.T) {
 	input := `
 let x = 5;
 let y = 10;
-let foobar = 83838;
+let foobar = y;
 `
 	l := lexer.New(input)
 	p := New(l)
@@ -23,17 +23,24 @@ let foobar = 83838;
 
 	tests := []struct {
 		expectedIdentifier string
+		expectedValue      any
 	}{
-		{"x"},
-		{"y"},
-		{"foobar"},
+		{"x", 5},
+		{"y", 10},
+		{"foobar", "y"},
 	}
 	for i, tt := range tests {
 		stmt := program.Statements[i]
 		if !testLetStatement(t, stmt, tt.expectedIdentifier) {
 			return
 		}
+
+		v := stmt.(*ast.LetStatement).Value
+		if !testLiteralExpression(t, v, tt.expectedValue) {
+			return
+		}
 	}
+
 }
 
 func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
@@ -44,7 +51,7 @@ func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
 
 	letStmt, ok := s.(*ast.LetStatement)
 	if !ok {
-		t.Errorf("s is not *ast.LetStatement. got=%T", s)
+		t.Errorf("s is not %T. got=%T", letStmt, s)
 		return false
 	}
 
@@ -78,7 +85,7 @@ return 933322;
 	for _, stmt := range program.Statements {
 		returnStmt, ok := stmt.(*ast.ReturnStatement)
 		if !ok {
-			t.Errorf("stmt is not *ast.ReturnStatement. got=%T", stmt)
+			t.Errorf("stmt is not %T. got=%T", returnStmt, stmt)
 			continue
 		}
 		if returnStmt.TokenLiteral() != "return" {
@@ -98,7 +105,7 @@ func TestIdentifierExpression(t *testing.T) {
 
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
-		t.Fatalf("program.Statements[0] is not *ast.ExpressionStatement. got=%T", program.Statements[0])
+		t.Fatalf("program.Statements[0] is not %T. got=%T", stmt, program.Statements[0])
 	}
 
 	testIdentifier(t, stmt.Expression, "foobar")
@@ -115,7 +122,7 @@ func TestIntegerLiteralExpression(t *testing.T) {
 
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
-		t.Fatalf("program.Statements[0] is not *ast.ExpressionStatement. got=%T", program.Statements[0])
+		t.Fatalf("program.Statements[0] is not %T. got=%T", stmt, program.Statements[0])
 	}
 
 	testIntegerLiteral(t, stmt.Expression, 5)
@@ -139,7 +146,7 @@ func TestBooleanExpression(t *testing.T) {
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 		if !ok {
-			t.Fatalf("program.Statements[0] is not *ast.ExpressionStatement. got=%T", program.Statements[0])
+			t.Fatalf("program.Statements[0] is not %T. got=%T", stmt, program.Statements[0])
 		}
 
 		if !testLiteralExpression(t, stmt.Expression, tt.value) {
@@ -169,12 +176,12 @@ func TestParsingPrefixExpressions(t *testing.T) {
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 		if !ok {
-			t.Fatalf("program.Statements[0] is not *ast.ExpressionStatement. got=%T", program.Statements[0])
+			t.Fatalf("program.Statements[0] is not %T. got=%T", stmt, program.Statements[0])
 		}
 
 		exp, ok := stmt.Expression.(*ast.PrefixExpression)
 		if !ok {
-			t.Fatalf("stmt is not *ast.PrefixExpression. got=%T", stmt.Expression)
+			t.Fatalf("stmt is not %T. got=%T", exp, stmt.Expression)
 		}
 		if exp.Operator != tt.operator {
 			t.Fatalf("exp.Operator is not '%s'. got=%s", tt.operator, exp.Operator)
@@ -214,7 +221,7 @@ func TestParsingInfixExpression(t *testing.T) {
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 		if !ok {
-			t.Fatalf("program.Statements[0] is not *ast.ExpressionStatement. got=%T", program.Statements[0])
+			t.Fatalf("program.Statements[0] is not %T. got=%T", stmt, program.Statements[0])
 		}
 
 		if !testInfixExpression(t, stmt.Expression, tt.leftValue, tt.operator, tt.rightValue) {
@@ -278,12 +285,12 @@ func TestIfExpression(t *testing.T) {
 
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
-		t.Fatalf("program.Statements[0] is not *ast.ExpressionStatement. got=%T", program.Statements[0])
+		t.Fatalf("program.Statements[0] is not %T. got=%T", stmt, program.Statements[0])
 	}
 
 	exp, ok := stmt.Expression.(*ast.IfExpression)
 	if !ok {
-		t.Fatalf("stmt.Expression is not *ast.IfExpression. got=%T", stmt.Expression)
+		t.Fatalf("stmt.Expression is not %T. got=%T", exp, stmt.Expression)
 	}
 
 	if !testInfixExpression(t, exp.Condition, "x", "<", "y") {
@@ -296,7 +303,7 @@ func TestIfExpression(t *testing.T) {
 
 	consequence, ok := exp.Consequence.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
-		t.Fatalf("Statements[0] is not *ast.ExpressionStatement. got=%T", exp.Consequence.Statements[0])
+		t.Fatalf("Statements[0] is not %T. got=%T", consequence, exp.Consequence.Statements[0])
 	}
 
 	if !testIdentifier(t, consequence.Expression, "x") {
@@ -319,12 +326,12 @@ func TestIfElseExpression(t *testing.T) {
 
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
-		t.Fatalf("program.Statements[0] is not *ast.ExpressionStatement. got=%T", program.Statements[0])
+		t.Fatalf("program.Statements[0] is not %T. got=%T", stmt, program.Statements[0])
 	}
 
 	exp, ok := stmt.Expression.(*ast.IfExpression)
 	if !ok {
-		t.Fatalf("stmt.Expression is not *ast.IfExpression. got=%T", stmt.Expression)
+		t.Fatalf("stmt.Expression is not %T. got=%T", exp, stmt.Expression)
 	}
 
 	if !testInfixExpression(t, exp.Condition, "x", "<", "y") {
@@ -337,7 +344,7 @@ func TestIfElseExpression(t *testing.T) {
 
 	consequence, ok := exp.Consequence.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
-		t.Fatalf("Statements[0] is not *ast.ExpressionStatement. got=%T", exp.Consequence.Statements[0])
+		t.Fatalf("Statements[0] is not %T. got=%T", consequence, exp.Consequence.Statements[0])
 	}
 
 	if !testIdentifier(t, consequence.Expression, "x") {
@@ -350,7 +357,7 @@ func TestIfElseExpression(t *testing.T) {
 
 	alternative, ok := exp.Alternative.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
-		t.Fatalf("Statements[0] is not *ast.ExpressionStatement. got=%T", exp.Alternative.Statements[0])
+		t.Fatalf("Statements[0] is not %T. got=%T", alternative, exp.Alternative.Statements[0])
 	}
 
 	if !testIdentifier(t, alternative.Expression, "y") {
@@ -369,12 +376,12 @@ func TestFunctionExpression(t *testing.T) {
 
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
-		t.Fatalf("program.Statements[0] is not *ast.ExpressionStatement. got=%T", program.Statements[0])
+		t.Fatalf("program.Statements[0] is not %T. got=%T", stmt, program.Statements[0])
 	}
 
 	function, ok := stmt.Expression.(*ast.FunctionExpression)
 	if !ok {
-		t.Fatalf("stmt.Expression is not *ast.FunctionExpression. got=%T", stmt.Expression)
+		t.Fatalf("stmt.Expression is not %T. got=%T", function, stmt.Expression)
 	}
 
 	if len(function.Parameters) != 2 {
@@ -390,7 +397,7 @@ func TestFunctionExpression(t *testing.T) {
 
 	bodyStmt, ok := function.Body.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
-		t.Fatalf("function body stmt is not *ast.ExpressionStatement. got=%T", function.Body.Statements[0])
+		t.Fatalf("function body stmt is not %T. got=%T", bodyStmt, function.Body.Statements[0])
 	}
 
 	testInfixExpression(t, bodyStmt.Expression, "x", "+", "y")
@@ -407,12 +414,12 @@ func TestCallExpression(t *testing.T) {
 
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
-		t.Fatalf("program.Statements[0] is not *ast.ExpressionStatement. got=%T", program.Statements[0])
+		t.Fatalf("program.Statements[0] is not %T. got=%T", stmt, program.Statements[0])
 	}
 
 	call, ok := stmt.Expression.(*ast.CallExpression)
 	if !ok {
-		t.Fatalf("stmt.Expression is not *ast.CallExpression. got=%T", stmt.Expression)
+		t.Fatalf("stmt.Expression is not %T. got=%T", call, stmt.Expression)
 	}
 
 	if !testIdentifier(t, call.Function, "add") {
@@ -430,7 +437,7 @@ func TestCallExpression(t *testing.T) {
 func testInfixExpression(t *testing.T, exp ast.Expression, left any, operator string, right any) bool {
 	opExp, ok := exp.(*ast.InfixExpression)
 	if !ok {
-		t.Errorf("exp is not *ast.InfixExpression. got=%T(%s)", exp, exp)
+		t.Errorf("exp is not %T. got=%T(%s)", opExp, exp, exp)
 		return false
 	}
 	if !testLiteralExpression(t, opExp.Left, left) {
@@ -464,7 +471,7 @@ func testLiteralExpression(t *testing.T, exp ast.Expression, expected any) bool 
 func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) bool {
 	integ, ok := il.(*ast.IntegerLiteral)
 	if !ok {
-		t.Errorf("il is not *ast.IntegerLiteral. got=%T", il)
+		t.Errorf("il is not %T. got=%T", integ, il)
 		return false
 	}
 
@@ -482,7 +489,7 @@ func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) bool {
 func testIdentifier(t *testing.T, exp ast.Expression, value string) bool {
 	ident, ok := exp.(*ast.Identifier)
 	if !ok {
-		t.Errorf("exp is not *ast.Identifier. got=%T", exp)
+		t.Errorf("exp is not %T. got=%T", ident, exp)
 		return false
 	}
 
@@ -502,7 +509,7 @@ func testIdentifier(t *testing.T, exp ast.Expression, value string) bool {
 func testBooleanLiteral(t *testing.T, exp ast.Expression, value bool) bool {
 	b, ok := exp.(*ast.Boolean)
 	if !ok {
-		t.Errorf("exp is not *ast.Boolean. got=%T", exp)
+		t.Errorf("exp is not %T. got=%T", b, exp)
 		return false
 	}
 
