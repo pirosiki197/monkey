@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/pirosiki197/monkey/evaluator"
 	"github.com/pirosiki197/monkey/lexer"
 	"github.com/pirosiki197/monkey/parser"
 )
@@ -29,8 +30,12 @@ func Start(in io.Reader, out io.Writer) {
 			printParseErrors(os.Stdout, p.Errors())
 			continue
 		}
-		io.WriteString(out, program.String())
-		out.Write([]byte{'\n'})
+
+		evaluated := evaluator.Eval(program)
+		if evaluated != nil {
+			io.WriteString(out, evaluated.Inspect())
+			out.Write([]byte{'\n'})
+		}
 	}
 }
 
