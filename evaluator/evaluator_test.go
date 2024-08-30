@@ -8,6 +8,25 @@ import (
 	"github.com/pirosiki197/monkey/parser"
 )
 
+func TestReturnStatements(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"return 10;", 10},
+		{"return 10; 9;", 10},
+		{"return 2 * 5; 9;", 10},
+		{"9; return 2 * 5; 9;", 10},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			evaluated := testEval(tt.input)
+			testIntegerObject(t, evaluated, tt.expected)
+		})
+	}
+}
+
 func TestIfElseExpression(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -23,15 +42,18 @@ func TestIfElseExpression(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		evaluated := testEval(tt.input)
-		integer, ok := tt.expected.(int)
-		if ok {
-			testIntegerObject(t, evaluated, int64(integer))
-		} else {
-			testNullObject(t, evaluated)
-		}
+		t.Run(tt.input, func(t *testing.T) {
+			evaluated := testEval(tt.input)
+			integer, ok := tt.expected.(int)
+			if ok {
+				testIntegerObject(t, evaluated, int64(integer))
+			} else {
+				testNullObject(t, evaluated)
+			}
+		})
 	}
 }
+
 func TestEvalIntegerExpression(t *testing.T) {
 	tests := []struct {
 		input    string

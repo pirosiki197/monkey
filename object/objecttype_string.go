@@ -11,11 +11,12 @@ func _() {
 	_ = x[INTEGER_OBJ-1]
 	_ = x[BOOLEAN_OBJ-2]
 	_ = x[NULL_OBJ-3]
+	_ = x[RETURN_VALUE_OBJ-4]
 }
 
-const _ObjectType_name = "INTEGERBOOLEANNULL"
+const _ObjectType_name = "INTEGERBOOLEANNULLRETURN_VALUE"
 
-var _ObjectType_index = [...]uint8{0, 7, 14, 18}
+var _ObjectType_index = [...]uint8{0, 7, 14, 18, 30}
 
 func (i ObjectType) String() string {
 	i -= 1
