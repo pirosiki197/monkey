@@ -50,6 +50,16 @@ func (e *Environment) Set(name string, val Object) Object {
 	return val
 }
 
+func (e *Environment) Update(name string, val Object) (Object, bool) {
+	if _, ok := e.store[name]; ok {
+		e.store[name] = val
+		return val, true
+	} else if e.outer != nil {
+		return e.outer.Update(name, val)
+	}
+	return nil, false
+}
+
 type Integer struct {
 	Value int64
 }

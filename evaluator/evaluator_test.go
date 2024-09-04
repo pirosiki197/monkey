@@ -166,6 +166,35 @@ func TestLetStatements(t *testing.T) {
 	}
 }
 
+func TestAssignStatements(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{
+			"let a = 5; a = 10; a;",
+			10,
+		},
+		{
+			"let a = 5; a = a + 5; a;",
+			10,
+		},
+		{
+			`
+let a = 5;
+if (true) {
+    a = 10;
+}
+a;`,
+			10,
+		},
+	}
+
+	for _, tt := range tests {
+		testIntegerObject(t, testEval(tt.input), tt.expected)
+	}
+}
+
 func TestErrorHandling(t *testing.T) {
 	tests := []struct {
 		input           string
@@ -209,6 +238,10 @@ if (10 > 1) {
 			"foobar",
 			"identifier not found: foobar",
 		},
+		{
+			"foo = 4;",
+			"identifier not found: foo",
+		},
 	}
 
 	for _, tt := range tests {
@@ -230,7 +263,7 @@ func testEval(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
-	e := NewEvaluator()
+	e := New()
 
 	return e.Eval(program)
 }

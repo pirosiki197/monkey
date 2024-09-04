@@ -68,6 +68,28 @@ func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
 	return true
 }
 
+func TestAssignStatement(t *testing.T) {
+	input := "a = 3;"
+
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+	checkProgramStatementsLength(t, program, 1)
+
+	as, ok := program.Statements[0].(*ast.AssignStatement)
+	if !ok {
+		t.Fatalf("stmt is not %T. got=%T", as, program.Statements[0])
+	}
+
+	if as.Name.Value != "a" {
+		t.Errorf("as.Name.Value is wrong. got=%q, expected=%q", as.Name.Value, "a")
+	}
+
+	testIntegerLiteral(t, as.Value, 3)
+}
+
 func TestReturnStatement(t *testing.T) {
 	input := `
 return 5;

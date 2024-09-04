@@ -11,7 +11,7 @@ type Evaluator struct {
 	env *object.Environment
 }
 
-func NewEvaluator() *Evaluator {
+func New() *Evaluator {
 	return &Evaluator{
 		env: object.NewEnvironment(),
 	}
@@ -29,6 +29,16 @@ func (e *Evaluator) Eval(node ast.Node) object.Object {
 			return val
 		}
 		e.env.Set(node.Name.Value, val)
+		return nil
+	case *ast.AssignStatement:
+		val := e.Eval(node.Value)
+		if isError(val) {
+			return val
+		}
+		_, ok := e.env.Update(node.Name.Value, val)
+		if !ok {
+			return newError("identifier not found: %s", node.Name.Value)
+		}
 		return nil
 	case *ast.ReturnStatement:
 		val := e.Eval(node.ReturnValue)

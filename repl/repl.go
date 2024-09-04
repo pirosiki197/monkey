@@ -16,7 +16,7 @@ const PROMPT = ">> "
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
 
-	evaluator := evaluator.NewEvaluator()
+	evaluator := evaluator.New()
 	for {
 		fmt.Print(PROMPT)
 		if !scanner.Scan() {

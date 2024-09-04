@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/pirosiki197/monkey/token"
@@ -57,6 +58,18 @@ func (ls *LetStatement) String() string {
 	}
 	out.WriteByte(';')
 	return out.String()
+}
+
+type AssignStatement struct {
+	Token token.Token
+	Name  *Identifier
+	Value Expression
+}
+
+func (as *AssignStatement) statementNode()       {}
+func (as *AssignStatement) TokenLiteral() string { return as.Token.Literal }
+func (as *AssignStatement) String() string {
+	return fmt.Sprintf("%s = %s;", as.Name, as.Value)
 }
 
 type ReturnStatement struct {
