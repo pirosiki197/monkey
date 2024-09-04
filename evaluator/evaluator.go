@@ -7,38 +7,57 @@ import (
 	"github.com/pirosiki197/monkey/object"
 )
 
-func Eval(node ast.Node) object.Object {
+type Evaluator struct {
+	env *object.Environment
+}
+
+func NewEvaluator() *Evaluator {
+	return &Evaluator{
+		env: object.NewEnvironment(),
+	}
+}
+
+func (e *Evaluator) Eval(node ast.Node) object.Object {
 	switch node := node.(type) {
 	case *ast.Program:
-		return evalProgram(node)
+		return e.evalProgram(node)
 	case *ast.BlockStatement:
-		return evalBlockStatements(node)
+		return e.evalBlockStatements(node)
+	case *ast.LetStatement:
+		val := e.Eval(node.Value)
+		if isError(val) {
+			return val
+		}
+		e.env.Set(node.Name.Value, val)
+		return nil
 	case *ast.ReturnStatement:
-		val := Eval(node.ReturnValue)
+		val := e.Eval(node.ReturnValue)
 		if isError(val) {
 			return val
 		}
 		return &object.ReturnValue{Value: val}
 	case *ast.IfExpression:
-		return evalIfExpression(node)
+		return e.evalIfExpression(node)
 	case *ast.ExpressionStatement:
-		return Eval(node.Expression)
+		return e.Eval(node.Expression)
 	case *ast.PrefixExpression:
-		right := Eval(node.Right)
+		right := e.Eval(node.Right)
 		if isError(right) {
 			return right
 		}
 		return evalPrefixExpression(node.Operator, right)
 	case *ast.InfixExpression:
-		left := Eval(node.Left)
+		left := e.Eval(node.Left)
 		if isError(left) {
 			return left
 		}
-		right := Eval(node.Right)
+		right := e.Eval(node.Right)
 		if isError(right) {
 			return right
 		}
 		return evalInfixExpression(node.Operator, left, right)
+	case *ast.Identifier:
+		return e.evalIdentifier(node)
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 	case *ast.Boolean:
@@ -48,11 +67,11 @@ func Eval(node ast.Node) object.Object {
 	}
 }
 
-func evalProgram(program *ast.Program) object.Object {
+func (e *Evaluator) evalProgram(program *ast.Program) object.Object {
 	stmts := program.Statements
 	var result object.Object
 	for _, stmt := range stmts {
-		result = Eval(stmt)
+		result = e.Eval(stmt)
 
 		switch result := result.(type) {
 		case *object.ReturnValue:
@@ -64,11 +83,12 @@ func evalProgram(program *ast.Program) object.Object {
 	return result
 }
 
-func evalBlockStatements(block *ast.BlockStatement) object.Object {
+func (e *Evaluator) evalBlockStatements(block *ast.BlockStatement) object.Object {
 	stmts := block.Statements
 	var result object.Object
+	enclosedEvaluator := &Evaluator{env: object.NewEnclosedEnvironment(e.env)}
 	for _, stmt := range stmts {
-		result = Eval(stmt)
+		result = enclosedEvaluator.Eval(stmt)
 
 		if result != nil {
 			rt := result.Type()
@@ -80,16 +100,16 @@ func evalBlockStatements(block *ast.BlockStatement) object.Object {
 	return result
 }
 
-func evalIfExpression(ie *ast.IfExpression) object.Object {
-	condition := Eval(ie.Condition)
+func (e *Evaluator) evalIfExpression(ie *ast.IfExpression) object.Object {
+	condition := e.Eval(ie.Condition)
 	if isError(condition) {
 		return condition
 	}
 
 	if isTruthy(condition) {
-		return Eval(ie.Consequence)
+		return e.Eval(ie.Consequence)
 	} else if ie.Alternative != nil {
-		return Eval(ie.Alternative)
+		return e.Eval(ie.Alternative)
 	} else {
 		return NULL
 	}
@@ -169,6 +189,14 @@ func evalMinusOperatorExpression(right object.Object) object.Object {
 	}
 	value := right.(*object.Integer).Value
 	return &object.Integer{Value: -value}
+}
+
+func (e *Evaluator) evalIdentifier(node *ast.Identifier) object.Object {
+	val, ok := e.env.Get(node.Value)
+	if !ok {
+		return newError("identifier not found: %s", node.Value)
+	}
+	return val
 }
 
 var (
