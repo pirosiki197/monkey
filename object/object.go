@@ -1,6 +1,11 @@
 package object
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/pirosiki197/monkey/ast"
+)
 
 type ObjectType int
 
@@ -16,6 +21,7 @@ const (
 	BOOLEAN_OBJ                 // BOOLEAN
 	NULL_OBJ                    // NULL
 	RETURN_VALUE_OBJ            // RETURN_VALUE
+	FUNCTION_OBJ                // FUNCTION
 	ERROR_OBJ                   // ERROR
 )
 
@@ -85,6 +91,32 @@ type ReturnValue struct {
 
 func (rv *ReturnValue) Type() ObjectType { return RETURN_VALUE_OBJ }
 func (rv *ReturnValue) Inspect() string  { return rv.Value.Inspect() }
+
+type Function struct {
+	Parameters []*ast.Identifier
+	Body       *ast.BlockStatement
+	Env        *Environment
+}
+
+func (f *Function) Type() ObjectType { return FUNCTION_OBJ }
+func (f *Function) Inspect() string {
+	var out strings.Builder
+
+	params := make([]string, 0, len(f.Parameters))
+	for _, p := range f.Parameters {
+		params = append(params, p.String())
+	}
+
+	out.WriteString("fn")
+	out.WriteByte('(')
+	out.WriteString(strings.Join(params, ", "))
+	out.WriteByte(')')
+	out.WriteString("{\n")
+	out.WriteString(f.Body.String())
+	out.WriteString("\n}")
+
+	return out.String()
+}
 
 type Error struct {
 	Message string

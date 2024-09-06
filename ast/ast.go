@@ -201,26 +201,26 @@ func (ie *IfExpression) String() string {
 	return out.String()
 }
 
-type FunctionExpression struct {
+type FunctionLiteral struct {
 	Token      token.Token // FUNCTION
 	Parameters []*Identifier
 	Body       *BlockStatement
 }
 
-func (fe *FunctionExpression) expressionNode()      {}
-func (fe *FunctionExpression) TokenLiteral() string { return fe.Token.Literal }
-func (fe *FunctionExpression) String() string {
+func (fl *FunctionLiteral) expressionNode()      {}
+func (fl *FunctionLiteral) TokenLiteral() string { return fl.Token.Literal }
+func (fl *FunctionLiteral) String() string {
 	var out strings.Builder
 
-	params := make([]string, len(fe.Parameters))
-	for i, param := range fe.Parameters {
+	params := make([]string, len(fl.Parameters))
+	for i, param := range fl.Parameters {
 		params[i] = param.String()
 	}
 
 	out.WriteByte('(')
 	out.WriteString(strings.Join(params, ", "))
 	out.WriteByte(')')
-	out.WriteString(fe.Body.String())
+	out.WriteString(fl.Body.String())
 
 	return out.String()
 }

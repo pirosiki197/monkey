@@ -17,6 +17,12 @@ func New() *Evaluator {
 	}
 }
 
+func NewWithEnv(env *object.Environment) *Evaluator {
+	return &Evaluator{
+		env: env,
+	}
+}
+
 func (e *Evaluator) Eval(node ast.Node) object.Object {
 	switch node := node.(type) {
 	case *ast.Program:
@@ -66,12 +72,27 @@ func (e *Evaluator) Eval(node ast.Node) object.Object {
 			return right
 		}
 		return evalInfixExpression(node.Operator, left, right)
+	case *ast.CallExpression:
+		function := e.Eval(node.Function)
+		if isError(function) {
+			return function
+		}
+		args := e.evalExpressions(node.Arguments)
+		if len(args) == 1 && isError(args[0]) {
+			return args[0]
+		}
+		evaluated := applyFunction(function, args)
+		return unwrapReturnValue(evaluated)
 	case *ast.Identifier:
 		return e.evalIdentifier(node)
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 	case *ast.Boolean:
 		return nativeBoolToBooleanObject(node.Value)
+	case *ast.FunctionLiteral:
+		params := node.Parameters
+		body := node.Body
+		return &object.Function{Parameters: params, Env: e.env, Body: body}
 	default:
 		return nil
 	}
@@ -107,6 +128,56 @@ func (e *Evaluator) evalBlockStatements(block *ast.BlockStatement) object.Object
 			}
 		}
 	}
+	return result
+}
+
+func applyFunction(fn object.Object, args []object.Object) object.Object {
+	function, ok := fn.(*object.Function)
+	if !ok {
+		return newError("not a function: %s", fn.Type())
+	}
+
+	if len(function.Parameters) != len(args) {
+		return newError("wrong length of arguments: %d parameters but called with %d arguments",
+			len(function.Parameters),
+			len(args))
+	}
+
+	extendedEnv := extendFunctionEnv(function, args)
+
+	e := NewWithEnv(extendedEnv)
+	evaluated := e.Eval(function.Body)
+	return unwrapReturnValue(evaluated)
+}
+
+func unwrapReturnValue(obj object.Object) object.Object {
+	if returnValue, ok := obj.(*object.ReturnValue); ok {
+		return returnValue.Value
+	}
+	return obj
+}
+
+func extendFunctionEnv(fn *object.Function, args []object.Object) *object.Environment {
+	env := object.NewEnclosedEnvironment(fn.Env)
+
+	for paramIdx, param := range fn.Parameters {
+		env.Set(param.Value, args[paramIdx])
+	}
+
+	return env
+}
+
+func (e *Evaluator) evalExpressions(exps []ast.Expression) []object.Object {
+	result := make([]object.Object, 0, len(exps))
+
+	for _, exp := range exps {
+		evaluated := e.Eval(exp)
+		if isError(evaluated) {
+			return []object.Object{evaluated}
+		}
+		result = append(result, evaluated)
+	}
+
 	return result
 }
 

@@ -401,7 +401,7 @@ func TestFunctionExpression(t *testing.T) {
 		t.Fatalf("program.Statements[0] is not %T. got=%T", stmt, program.Statements[0])
 	}
 
-	function, ok := stmt.Expression.(*ast.FunctionExpression)
+	function, ok := stmt.Expression.(*ast.FunctionLiteral)
 	if !ok {
 		t.Fatalf("stmt.Expression is not %T. got=%T", function, stmt.Expression)
 	}
