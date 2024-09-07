@@ -1,6 +1,10 @@
 package lexer
 
-import "github.com/pirosiki197/monkey/token"
+import (
+	"errors"
+
+	"github.com/pirosiki197/monkey/token"
+)
 
 type Lexer struct {
 	input        string
@@ -47,6 +51,20 @@ func (l *Lexer) readNumber() string {
 		l.readChar()
 	}
 	return l.input[position:l.position]
+}
+
+func (l *Lexer) readString() (string, error) {
+	position := l.position + 1
+	for {
+		l.readChar()
+		if l.ch == '"' {
+			break
+		}
+		if l.ch == 0 {
+			return "", errors.New("unexpected EOF")
+		}
+	}
+	return l.input[position:l.position], nil
 }
 
 func (l *Lexer) skipWhitespace() {
@@ -117,6 +135,15 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.LBRACE, l.ch)
 	case '}':
 		tok = newToken(token.RBRACE, l.ch)
+	case '"':
+		s, err := l.readString()
+		if err != nil {
+			tok.Type = token.ILLEGAL
+			tok.Literal = err.Error()
+		} else {
+			tok.Type = token.STRING
+			tok.Literal = s
+		}
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
