@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	"fmt"
+	"unique"
 
 	"github.com/pirosiki197/monkey/ast"
 	"github.com/pirosiki197/monkey/object"
@@ -88,7 +89,7 @@ func (e *Evaluator) Eval(node ast.Node) object.Object {
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 	case *ast.StringLiteral:
-		return &object.String{Value: node.Value}
+		return &object.String{Value: unique.Make(node.Value)}
 	case *ast.Boolean:
 		return nativeBoolToBooleanObject(node.Value)
 	case *ast.FunctionLiteral:
@@ -261,7 +262,7 @@ func evalStringInfixExpression(operator string, left, right object.Object) objec
 
 	switch operator {
 	case "+":
-		return &object.String{Value: leftVal + rightVal}
+		return &object.String{Value: unique.Make(leftVal.Value() + rightVal.Value())}
 	case "==":
 		return nativeBoolToBooleanObject(leftVal == rightVal)
 	case "!=":

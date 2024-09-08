@@ -3,6 +3,7 @@ package object
 import (
 	"fmt"
 	"strings"
+	"unique"
 
 	"github.com/pirosiki197/monkey/ast"
 )
@@ -75,11 +76,11 @@ func (i *Integer) Type() ObjectType { return INTEGER_OBJ }
 func (i *Integer) Inspect() string  { return fmt.Sprintf("%d", i.Value) }
 
 type String struct {
-	Value string
+	Value unique.Handle[string]
 }
 
 func (s *String) Type() ObjectType { return STRING_OBJ }
-func (s *String) Inspect() string  { return s.Value }
+func (s *String) Inspect() string  { return s.Value.Value() }
 
 type Boolean struct {
 	Value bool
