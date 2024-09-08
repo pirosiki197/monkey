@@ -87,6 +87,8 @@ func (e *Evaluator) Eval(node ast.Node) object.Object {
 		return e.evalIdentifier(node)
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
+	case *ast.StringLiteral:
+		return &object.String{Value: node.Value}
 	case *ast.Boolean:
 		return nativeBoolToBooleanObject(node.Value)
 	case *ast.FunctionLiteral:
@@ -209,8 +211,10 @@ func evalPrefixExpression(operator string, right object.Object) object.Object {
 
 func evalInfixExpression(operator string, left object.Object, right object.Object) object.Object {
 	switch {
-	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
+	case both(left, right, object.INTEGER_OBJ):
 		return evalIntegerInfixExpression(operator, left, right)
+	case both(left, right, object.STRING_OBJ):
+		return evalStringInfixExpression(operator, left, right)
 	case operator == "==":
 		return nativeBoolToBooleanObject(left == right)
 	case operator == "!=":
@@ -242,6 +246,22 @@ func evalIntegerInfixExpression(operator string, left object.Object, right objec
 		return nativeBoolToBooleanObject(leftVal <= rightVal)
 	case ">=":
 		return nativeBoolToBooleanObject(leftVal >= rightVal)
+	case "==":
+		return nativeBoolToBooleanObject(leftVal == rightVal)
+	case "!=":
+		return nativeBoolToBooleanObject(leftVal != rightVal)
+	default:
+		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
+	}
+}
+
+func evalStringInfixExpression(operator string, left, right object.Object) object.Object {
+	leftVal := left.(*object.String).Value
+	rightVal := right.(*object.String).Value
+
+	switch operator {
+	case "+":
+		return &object.String{Value: leftVal + rightVal}
 	case "==":
 		return nativeBoolToBooleanObject(leftVal == rightVal)
 	case "!=":
@@ -313,4 +333,8 @@ func isError(obj object.Object) bool {
 
 func newError(format string, a ...any) *object.Error {
 	return &object.Error{Message: fmt.Sprintf(format, a...)}
+}
+
+func both(left, right object.Object, objType object.ObjectType) bool {
+	return left.Type() == objType && right.Type() == objType
 }
