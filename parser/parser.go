@@ -60,6 +60,7 @@ func New(l *lexer.Lexer) *Parser {
 
 	p.registerPrefixFn(token.IDENT, p.parseIdentifier)
 	p.registerPrefixFn(token.INT, p.parseInteger)
+	p.registerPrefixFn(token.STRING, p.parseString)
 	p.registerPrefixFn(token.TRUE, p.parseBoolean)
 	p.registerPrefixFn(token.FALSE, p.parseBoolean)
 	p.registerPrefixFn(token.LPAREN, p.parseGroupExpression)
@@ -242,6 +243,14 @@ func (p *Parser) parseInteger() ast.Expression {
 	return &ast.IntegerLiteral{
 		Token: p.curToken,
 		Value: v,
+	}
+}
+
+func (p *Parser) parseString() ast.Expression {
+	// TODO: parse escaped characters? (e.g. \n, \")
+	return &ast.StringLiteral{
+		Token: p.curToken,
+		Value: p.curToken.Literal,
 	}
 }
 
