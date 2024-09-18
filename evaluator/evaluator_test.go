@@ -315,6 +315,21 @@ if (10 > 1) {
 	}
 }
 
+func TestBuiltinFunctions(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int
+	}{
+		{`len("")`, 0},
+		{`len("four")`, 4},
+		{`len("hello world")`, 11},
+	}
+
+	for _, tt := range tests {
+		testIntegerObject(t, testEval(tt.input), int64(tt.expected))
+	}
+}
+
 func testEval(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)

@@ -135,22 +135,22 @@ func (e *Evaluator) evalBlockStatements(block *ast.BlockStatement) object.Object
 }
 
 func applyFunction(fn object.Object, args []object.Object) object.Object {
-	function, ok := fn.(*object.Function)
-	if !ok {
+	switch fn := fn.(type) {
+	case *object.Function:
+		if len(fn.Parameters) != len(args) {
+			return newError("wrong length of arguments: %d parameters but called with %d arguments",
+				len(fn.Parameters),
+				len(args))
+		}
+		extendedEnv := extendFunctionEnv(fn, args)
+		e := NewWithEnv(extendedEnv)
+		evaluated := e.Eval(fn.Body)
+		return unwrapReturnValue(evaluated)
+	case *object.Builtin:
+		return fn.Fn(args...)
+	default:
 		return newError("not a function: %s", fn.Type())
 	}
-
-	if len(function.Parameters) != len(args) {
-		return newError("wrong length of arguments: %d parameters but called with %d arguments",
-			len(function.Parameters),
-			len(args))
-	}
-
-	extendedEnv := extendFunctionEnv(function, args)
-
-	e := NewWithEnv(extendedEnv)
-	evaluated := e.Eval(function.Body)
-	return unwrapReturnValue(evaluated)
 }
 
 func unwrapReturnValue(obj object.Object) object.Object {
@@ -294,11 +294,13 @@ func evalMinusOperatorExpression(right object.Object) object.Object {
 }
 
 func (e *Evaluator) evalIdentifier(node *ast.Identifier) object.Object {
-	val, ok := e.env.Get(node.Value)
-	if !ok {
-		return newError("identifier not found: %s", node.Value)
+	if val, ok := e.env.Get(node.Value); ok {
+		return val
 	}
-	return val
+	if builtin, ok := builtins[node.Value]; ok {
+		return builtin
+	}
+	return newError("identifier not found: %s", node.Value)
 }
 
 var (
